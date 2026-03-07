@@ -12,7 +12,8 @@ import org.slf4j.LoggerFactory;
 @Component
 public class GatewayLoggingFilter implements GlobalFilter {
 
-    private static final Logger log = (Logger) LoggerFactory.getLogger(GatewayLoggingFilter.class);
+    private static final Logger log =
+            LoggerFactory.getLogger(GatewayLoggingFilter.class);
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -21,6 +22,9 @@ public class GatewayLoggingFilter implements GlobalFilter {
         String method = exchange.getRequest().getMethod().name();
 
         log.info("Request routed via API Gateway: "+ method +" "+ path);
+        if(path.startsWith("/auth")){
+            return chain.filter(exchange);
+        }
 
         return chain.filter(exchange);
     }
