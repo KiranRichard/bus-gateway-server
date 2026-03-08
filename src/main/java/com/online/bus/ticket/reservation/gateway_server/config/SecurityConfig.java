@@ -18,9 +18,9 @@ public class SecurityConfig {
 
                 .authorizeExchange(ex -> ex
                         .pathMatchers("/auth/**").permitAll()
-                        //.pathMatchers("/api/users/**").authenticated()
+                        .pathMatchers("/h2-console/**").permitAll()
                         //.anyExchange().authenticated()
-                        .anyExchange().permitAll()
+                        .anyExchange().permitAll()//need to comment
                 )
 
                 .build();

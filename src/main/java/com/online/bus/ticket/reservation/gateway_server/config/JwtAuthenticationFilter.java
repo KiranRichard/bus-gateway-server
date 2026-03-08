@@ -25,8 +25,8 @@ public class JwtAuthenticationFilter implements GlobalFilter {
 
         String path = exchange.getRequest().getURI().getPath();
 
-        // Allow login API
-        if(path.startsWith("/auth")) {
+        // Public endpoints (skip JWT validation)
+        if (path.startsWith("/auth") || path.startsWith("/h2-console")) {
             return chain.filter(exchange);
         }
 
@@ -34,24 +34,35 @@ public class JwtAuthenticationFilter implements GlobalFilter {
                 .getHeaders()
                 .getFirst(HttpHeaders.AUTHORIZATION);
 
-        if(authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return Mono.error(new RuntimeException("Missing Authorization Header"));
+        // If no token → reject request
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            exchange.getResponse().setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
         }
 
         String token = authHeader.substring(7);
 
-        jwtService.validateToken(token);
+        try {
 
-        String username = jwtService.extractUsername(token);
+            // Validate token
+            jwtService.validateToken(token);
 
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(
-                        username,
-                        null,
-                        Collections.emptyList()
-                );
+            String username = jwtService.extractUsername(token);
 
-        return chain.filter(exchange)
-                .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            username,
+                            null,
+                            Collections.emptyList()
+                    );
+
+            return chain.filter(exchange)
+                    .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
+
+        } catch (Exception ex) {
+
+            exchange.getResponse().setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
+        }
     }
 }

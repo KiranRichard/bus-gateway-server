@@ -22,9 +22,6 @@ public class GatewayLoggingFilter implements GlobalFilter {
         String method = exchange.getRequest().getMethod().name();
 
         log.info("Request routed via API Gateway: "+ method +" "+ path);
-        if(path.startsWith("/auth")){
-            return chain.filter(exchange);
-        }
 
         return chain.filter(exchange);
     }
